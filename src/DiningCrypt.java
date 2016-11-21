@@ -1,5 +1,3 @@
-import java.math.BigInteger;
-
 public class DiningCrypt {
 
     private String SA;
@@ -31,9 +29,9 @@ public class DiningCrypt {
         DA = convertHex(DA);
         DB = convertHex(DB);
         M = convertHex(M);
-        String key = computeKey(SA, SB);
+        String key = xOR(SA, SB);
         if (b == 1) {
-            broadcast = computeB1Message(key);
+            broadcast = computeB1Message(key, M);
         } else {
             key = recalculateKey(key);
             broadcast = computeB0Message(key);
@@ -69,7 +67,7 @@ public class DiningCrypt {
      * @param sb , the key shared with Bob.
      * @return The computed String key.
      */
-    private String computeKey(String sa, String sb) {
+    private String xOR(String sa, String sb) {
         StringBuilder key = new StringBuilder();
         for (int i = 0; i < 16; i++) {
             key.append(sa.charAt(i) ^ sb.charAt(i));
@@ -83,11 +81,11 @@ public class DiningCrypt {
      * @param key , the key to send the message with.
      * @return
      */
-    private String computeB1Message(String key) {
+    private String computeB1Message(String key, String message) {
         StringBuilder bin = new StringBuilder();
         //Calculate the new message with the key
         for (int i = 0; i < 16; i++) {
-            bin.append(key.charAt(i) ^ M.charAt(i));
+            bin.append(key.charAt(i) ^ message.charAt(i));
         }
         //Transform Stringbuilder to hex
         int decimal = Integer.parseInt(bin.toString(), 2);
@@ -141,9 +139,19 @@ public class DiningCrypt {
 
     private String computeB0Message(String key) {
         StringBuilder sb = new StringBuilder();
-        sb.append(computeB1Message(key));
-
+        sb.append(computeB1Message(key, M));
+        String our = sb.toString();
+        sb.append(computeRetrieved(our));
         return sb.toString();
     }
 
+
+    private String computeRetrieved(String ourMessage) {
+        StringBuilder result = new StringBuilder();
+        String mBinary = convertHex(ourMessage);
+
+        String dadb = xOR(DA, DB);
+        result.append(computeB1Message(dadb, mBinary));
+        return result.toString();
+    }
 }
